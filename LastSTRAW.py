@@ -20,82 +20,81 @@ import requests
 from zipfile import ZipFile
 
 class LastStrawData(Dataset):
+    '''
+    LastStrawData inherits from Pytorch dataset class.
+    LastStrawData(path: str | None [, argument=value (optional)])
+        
+        Arguments    : Values / types
+        -----------------------------
+        down_sample  : float | 0 (default: 0)
+        url          : str
+        folder       : str
+        download_file: str
+        check_folder : str
 
+    Description:
+    The LastStrawData class imports the LastSTRAW data either from
+    a URL or from a given path (folder). It can also visualise the
+    point cloud data using open3D. If a path is given it should
+    point directly to numpy xyz files. A list of these files is
+    generated in the order governed by the operating system call
+    (import os) os.listdir(path).
+    
+    The file format is:
+        X Y Z R G B class instance (each field separated by space)
+        X,Y and Z: signed float
+        R,G and B: unsigned int8
+        class    : int64 
+        instance : int64
+        comments : lines starting with // (such as a header line)
+    
+    This class is based upon, but extensively modified, a code
+    example given by LastSTRAW at https://lcas.github.io/LAST-Straw/
+
+    Author     : Andy Perrett
+    Contact    : aperrett@lincoln.ac.uk
+               : andy@wired-wrong.co.uk
+    Date       : 30-05-2024
+    Description: Written for use as part of the 2024 CDT summer
+               : school. Theme 6 - Phenotyping and beyond colour            
+    
+    Example usage:
+
+    from LastSTRAW import LastStrawData
+    
+    URL = \"https://lcas.lincoln.ac.uk/nextcloud/index.php/s/omQY9ciP3Wr43GH/download\"
+    FOLDER = \"/tmp/\"
+    CHECK_FOLDER = \"LAST-Straw/\"
+    DOWNLOAD_FILE = \"download.zip\"
+    VOXEL_SIZE = 0
+    DATA_DIR = None
+    #DATA_DIR = \'/home/andy/Documents/CDT summer school/LAST-Straw/LAST-Straw/\'
+    
+    def main():
+
+        lastStraw = LastStrawData(data_dir=DATA_DIR,
+                                    down_sample=VOXEL_SIZE,
+                                    url = URL,
+                                    folder=FOLDER,
+                                    check_folder = CHECK_FOLDER,
+                                    download_file=DOWNLOAD_FILE)
+        
+        pc, rgb, labels = lastStraw[0]
+
+        lastStraw.visualise(0)
+
+        # Load each scan
+        # for pc, rgb, _ in lastStraw:
+        #     pointC = o3d.geometry.PointCloud()
+        #     pointC.points = o3d.utility.Vector3dVector(pc)
+        #     pointC.colors = o3d.utility.Vector3dVector(rgb)
+        #     lastStraw.visualise(pointC)
+
+    if __name__ == \'__main__\':
+        main()           
+    '''
+    
     def __init__(self, path=None, **kwargs):
-        '''
-        LastStrawData inherits from Pytorch dataset class.
-        LastStrawData(path: str | None [, argument=value (optional)])
-            
-            Arguments    : Values / types
-            -----------------------------
-            down_sample  : float | 0 (default: 0)
-            url          : str
-            folder       : str
-            download_file: str
-            check_folder : str
-
-        Description:
-        The LastStrawData class imports the LastSTRAW data either from
-        a URL or from a given path (folder). It can also visualise the
-        point cloud data using open3D. If a path is given it should
-        point directly to numpy xyz files. A list of these files is
-        generated in the order governed by the operating system call
-        (import os) os.listdir(path).
-        
-        The file format is:
-            X Y Z R G B class instance (each field separated by space)
-            X,Y and Z: signed float
-            R,G and B: unsigned int8
-            class    : int64 
-            instance : int64
-            comments : lines starting with // (such as a header line)
-        
-        This class is based upon, but extensively modified, a code
-        example given by LastSTRAW at https://lcas.github.io/LAST-Straw/
-
-        Author     : Andy Perrett
-        Contact    : aperrett@lincoln.ac.uk
-                   : andy@wired-wrong.co.uk
-        Date       : 30-05-2024
-        Description: Written for use as part of the 2024 CDT summer
-                   : school. Theme 6 - Phenotyping and beyond colour            
-        
-        Example usage:
-
-        from LastSTRAW import LastStrawData
-        
-        URL = \"https://lcas.lincoln.ac.uk/nextcloud/index.php/s/omQY9ciP3Wr43GH/download\"
-        FOLDER = \"/tmp/\"
-        CHECK_FOLDER = \"LAST-Straw/\"
-        DOWNLOAD_FILE = \"download.zip\"
-        VOXEL_SIZE = 0
-        DATA_DIR = None
-        #DATA_DIR = \'/home/andy/Documents/CDT summer school/LAST-Straw/LAST-Straw/\'
-        
-        def main():
-
-            lastStraw = LastStrawData(data_dir=DATA_DIR,
-                                        down_sample=VOXEL_SIZE,
-                                        url = URL,
-                                        folder=FOLDER,
-                                        check_folder = CHECK_FOLDER,
-                                        download_file=DOWNLOAD_FILE)
-            
-            pc, rgb, labels = lastStraw[0]
-
-            lastStraw.visualise(0)
-
-            # Load each scan
-            # for pc, rgb, _ in lastStraw:
-            #     pointC = o3d.geometry.PointCloud()
-            #     pointC.points = o3d.utility.Vector3dVector(pc)
-            #     pointC.colors = o3d.utility.Vector3dVector(rgb)
-            #     lastStraw.visualise(pointC)
-
-        if __name__ == \'__main__\':
-            main()           
-
-        '''
         
         # Default values for parameters
         self.downSample = 0
