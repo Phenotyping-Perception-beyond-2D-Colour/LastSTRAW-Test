@@ -1,4 +1,5 @@
 from LastSTRAW import LastStrawData
+import open3d as o3d
 
 # Global setup
 
@@ -16,18 +17,20 @@ VOXEL_SIZE = 0
 DATA_DIR = None
 #DATA_DIR = '/home/andy/Documents/CDT summer school/LAST-Straw/LAST-Straw/'
 
-
+from open3d._build_config import _build_config
 
 def main():
 
     '''Example usage of LastStrawData importer'''
 
-    lastStraw = LastStrawData(data_dir=DATA_DIR,
-                                down_sample=VOXEL_SIZE,
+    lastStraw = LastStrawData(data_dir = DATA_DIR,
+                                down_sample = VOXEL_SIZE,
                                 url = URL,
-                                folder=FOLDER,
+                                folder = FOLDER,
                                 check_folder = CHECK_FOLDER,
-                                download_file=DOWNLOAD_FILE)
+                                download_file = DOWNLOAD_FILE)
+    
+    # Example of a 3D Strawberry scan in raw data
     pc, rgb, labels = lastStraw[0]
 
     lastStraw.visualise(0)

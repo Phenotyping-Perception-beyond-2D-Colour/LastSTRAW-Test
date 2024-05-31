@@ -49,14 +49,14 @@ class LastStrawData(Dataset):
         comments : lines starting with // (such as a header line)
     
     This class is based upon, but extensively modified, a code
-    example given by LastSTRAW at https://lcas.github.io/LAST-Straw/
+    example given by LAST-Straw at https://lcas.github.io/LAST-Straw/
 
     Author     : Andy Perrett
     Contact    : aperrett@lincoln.ac.uk
-               : andy@wired-wrong.co.uk
+                : andy@wired-wrong.co.uk
     Date       : 30-05-2024
     Description: Written for use as part of the 2024 CDT summer
-               : school. Theme 6 - Phenotyping and beyond colour            
+                : school. Theme 6 - Phenotyping and beyond colour            
     
     Example usage:
 
@@ -92,8 +92,8 @@ class LastStrawData(Dataset):
 
     if __name__ == \'__main__\':
         main()           
+
     '''
-    
     def __init__(self, path=None, **kwargs):
         
         # Default values for parameters
@@ -122,6 +122,7 @@ class LastStrawData(Dataset):
 
         # If no path given download lastStraw, unzip and continue
         if path == None:
+            # TODO change so that unzip is tried first
             self.__download()
             self.__unzip()
             self.path = self.folder + self.checkFolder
@@ -138,7 +139,6 @@ class LastStrawData(Dataset):
         If the unzipped files exist do not download. If they do not
         exist then download the zip file
         '''
-        print(self.folder + self.checkFolder)
         if not os.path.isdir(self.folder + self.checkFolder):
             if not os.path.isfile(self.folder + self.downloadFile):
                 print("Downloading: " + self.downloadFile + " to folder: " + self.folder + " from: " + self.url)
@@ -148,10 +148,10 @@ class LastStrawData(Dataset):
                     for data in tqdm(response.iter_content()):
                         handle.write(data)
         else:
-            print("File already download and extracted.")
+            print("File already downloaded and extracted.")
 
 
-    # Taken from https://www.geeksforgeeks.org/unzipping-files-in-python/
+    # Unzip the downloaded file
     def __unzip(self):
         '''
         If data zip file has been download, extract all files
@@ -159,13 +159,30 @@ class LastStrawData(Dataset):
         '''
         if os.path.isfile(self.folder + self.downloadFile): 
             if not os.path.isdir(self.folder+ self.checkFolder):
-                print("Extracting: " + self.folder + self.downloadFile)
-                with ZipFile(self.folder + self.downloadFile, 'r') as zObject: 
-                    zObject.extractall(path=self.folder) 
-                print("Deleting " + self.folder + self.downloadFile)
-                os.remove(self.folder + self.downloadFile)
+                try:
+                    self.__extractZip() 
+                except Exception  as e:
+                    # NOTE Presumably a partial download occurred
+                    print("Error:",e)
+                    print("Re-downloading: " + self.downloadFile + " to folder: " + self.folder + " from: " + self.url)
+                    self.__deleteZip()
+                    self.__download()
+                    self.__extractZip()
+                finally:
+                    self.__deleteZip()
 
-    # Loads point cloud data files
+    # Delete the downloaded file
+    def __deleteZip(self):
+        print("Deleting: " + self.folder + self.downloadFile)
+        os.remove(self.folder + self.downloadFile)
+
+    # Extract files
+    def __extractZip(self):
+        print("Extracting: " + self.folder + self.downloadFile)
+        with ZipFile(self.folder + self.downloadFile, 'r') as zObject: 
+            zObject.extractall(path=self.folder)
+
+    # Loads point cloud data files as from https://lcas.github.io/LAST-Straw/
     def __load_as_array(self, index):
         # Loads the data from an .xyz file into a numpy array.
         # Also returns a boolean indicating whether per-point labels are available.
@@ -173,7 +190,7 @@ class LastStrawData(Dataset):
         labels_available = data_array.shape[1] == 8
         return data_array, labels_available
 
-    # Loads point cloud from file in Numpy array. Returns point cloud
+    # Loads point cloud from file in Numpy array. Returns point cloud as from https://lcas.github.io/LAST-Straw/
     def __load_as_o3d_cloud(self, index):
         # Loads the data from an .xyz file into an open3d point cloud object.
         data, labels_available = self.__load_as_array(index)
@@ -185,7 +202,7 @@ class LastStrawData(Dataset):
             labels = data[:,6:]
         return pc, labels_available, labels
 
-    # Saves the point cloud data - TODO NOTE untested
+    # Saves the point cloud data - TODO NOTE untested by Andy - taken from https://lcas.github.io/LAST-Straw/
     def save_data_as_xyz(self, data, fileName):
         # To save your own data in the same format as we used, you can use this function.
         # Edit as needed with more or fewer columns.
