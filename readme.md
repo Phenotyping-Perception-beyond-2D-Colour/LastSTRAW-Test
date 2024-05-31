@@ -1,5 +1,5 @@
 <center>
-    <p float="center">
+    <p align="center">
         <img src="Resources/Screenshot from 2024-05-30 12-20-29.png" width="150" \>
     </p>
 </center>
