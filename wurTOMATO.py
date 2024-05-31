@@ -21,6 +21,20 @@ from tqdm import tqdm
 from pathlib import Path
 import pandas as pd
 
+semantic_id2rgb_colour = {
+    1:[255, 50, 50],
+    2:[255, 225, 50],
+    3:[109, 255, 50],
+    4:[50, 167, 255],
+                          }
+# Find the maximum semantic ID to determine the size of the array
+max_id = max(semantic_id2rgb_colour.keys())
+# Create an array where index corresponds to the semantic ID
+rgb_array = np.zeros((max_id + 1, 3), dtype=np.uint8)
+# Populate the array with the RGB values
+for key, value in semantic_id2rgb_colour.items():
+    rgb_array[key] = value
+
 class WurTomatoData(Dataset):
     '''
     LastStrawData inherits from Pytorch dataset class.
@@ -187,7 +201,9 @@ class WurTomatoData(Dataset):
         labels = None
         if labels_available:
             labels = data[["semantic", "leaf_stem_instances", "leaf_instances", "stem_instances"]].values
-        return pc, labels_available, labels
+        # if load_skeleton_data:
+            skeleton_data = data.loc[~data["x_skeleton"].isna(), ["x_skeleton",	"y_skeleton", "z_skeleton",	"vid",	"parentid",	"edgetype"]]
+        return pc, labels_available, labels, skeleton_data
 
     # Saves the point cloud data - TODO NOTE untested
     # def save_data_as_xyz(self, data, fileName):
@@ -212,22 +228,64 @@ class WurTomatoData(Dataset):
         vis = o3d.visualization.draw_geometries([pointCloud], window_name=name)
         del vis
 
+    def visualise_semantic(self, i):
+        if isinstance(i, int):
+            name = self.scans[i]
+            pointCloud,_,labels = self.__load_as_o3d_cloud(i)
+        else:
+            name = "PointCloud"
+            pointCloud = i
+        colors = rgb_array[labels[:,0].astype(int)]
+        pointCloud.colors = o3d.utility.Vector3dVector(colors / 255)
+        if self.downSample != 0:
+            pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
+        vis = o3d.visualization.draw_geometries([pointCloud], window_name=name)
+        del vis
+
+    def visualize_skeleton(self, i, parent_nodes_only=True):
+        pointCloud,_,labels, skeleton_data = self.__load_as_o3d_cloud(i)
+        pointCloud.colors = o3d.utility.Vector3dVector(np.asarray(pointCloud.colors) / 255)
+
+        pc_skelet = o3d.geometry.PointCloud()
+
+        if parent_nodes_only:
+            parent_nodes_only = self.get_only_parent_nodes(skeleton_data)
+            colors = np.repeat(np.array([[1, 0., 0.]]), len(parent_nodes_only), axis=0)
+            pc_skelet.points = o3d.utility.Vector3dVector(parent_nodes_only)
+            pc_skelet.colors = o3d.utility.Vector3dVector(colors)
+        else:
+            pc_skelet.points = o3d.utility.Vector3dVector(skeleton_data[["x_skeleton",	"y_skeleton", "z_skeleton"]].values)
+            colors = np.repeat(np.array([[0.5, 0.5, 0.5]]), len(skeleton_data), axis=0)
+
+        vis = o3d.visualization.draw_geometries([pc_skelet], window_name="PointCloud")
+        ## 
+        pd.DataFrame(parent_nodes_only).to_csv("debug.txt", index=False)
+        print("x")
+
+    def get_only_parent_nodes(self, skeleton_data):
+        parentids = skeleton_data.loc[skeleton_data["edgetype"]=="+", "parentid"].values
+        parent_nodes_only = skeleton_data[skeleton_data['vid'].isin(parentids)][["x_skeleton", "y_skeleton", "z_skeleton"]].values
+        return parent_nodes_only
+
     # Return number of data files
     def __len__(self):
         return len(self.scans)
     
     # Returns 3 Numpy arrays [[x,y,z]], [[R,G,B]] and [[labels]]
     def __getitem__(self, index):
-        pointCloud, labels_available, labels = self.__load_as_o3d_cloud(index)
+        pointCloud, labels_available, labels, skeleton_data = self.__load_as_o3d_cloud(index)
         if self.downSample != 0:
             pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
         pc = pointCloud.points
         rgb = pointCloud.colors
 
-        return np.asarray(pc), np.asarray(rgb), np.asarray(labels)
+        return np.asarray(pc), np.asarray(rgb), np.asarray(labels), skeleton_data
 
 
 if __name__=="__main__":
     obj = WurTomatoData()
-    pc, rgb, labels = obj[0]
-    obj.visualise(0)
+    pc, rgb, labels, _ = obj[0]
+    # obj.visualise(0)
+    # obj.visualise_semantic(0)
+    obj.visualize_skeleton(0)
+
