@@ -95,13 +95,14 @@ class LastStrawData(Dataset):
 
     '''
     def __init__(self, path=None, **kwargs):
-        
+
         # Default values for parameters
         self.downSample = 0
         self.url = None
         self.folder = None
         self.checkFolder = None
         self.downloadFile = None
+        self.path = path
 
         # If no parameters given - do nothing more - silently
         if path == None and len(kwargs) == 0:
@@ -126,8 +127,6 @@ class LastStrawData(Dataset):
             self.__download()
             self.__unzip()
             self.path = self.folder + self.checkFolder
-        else:
-            self.path = path
 
         # Store all numpy xyz files
         all_files = sorted(os.listdir(self.path))
@@ -237,4 +236,4 @@ class LastStrawData(Dataset):
         pc = pointCloud.points
         rgb = pointCloud.colors
 
-        return np.asarray(pc), np.asarray(rgb), np.asarray(labels)
+        return np.asarray(pc), np.asarray(rgb), np.asarray(labels), self.scans[index]
