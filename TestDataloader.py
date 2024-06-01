@@ -34,38 +34,24 @@ def main():
     
     # Example of a 3D Strawberry scan in raw data
     pc, rgb, labels, fileName = lastStraw[0]
-    #print(labels, fileName)
-    #lastStraw.visualise(0)
+    
+    # Visualise
+    lastStraw.visualise(0)
     
     # Load each scan and segment by class
-    classColours = {
-        1: {'name': 'Leaf', 'colour': [0,0,255]},
-        2: {'name': 'Stem', 'colour': [0,255, 0]},
-        3: {'name': 'Fruit', 'colour': [255, 0, 255]},
-        4: {'name': 'Flower', 'colour': [255, 255, 0]},
-        5: {'name': 'Crown', 'colour': [255, 0, 0]},
-        6: {'name': 'Background',  'colour': [255,255,255]}, # Grow bag and stray leaves
-        7: {'name': 'Other part',  'colour': [255, 128, 0]},
-        8: {'name': 'Platform',  'colour': [255,255,255]},
-        9: {'name': 'Imature leaf', 'colour': [0,0,128]}
-        }
-    
-    # Filter scan and segment
     for pc, rgb, labels, _ in lastStraw:
-        new_PC = []
-        new_RGB = []
-        new_LAB = []
-        for i, (pc1, rgb1, labels1) in enumerate(zip(pc,rgb,labels)):
-            rgb[i] = classColours[labels1[0]]['colour']
-            if not np.array_equal(rgb[i],np.array([255.,255.,255.])):
-                new_PC.append(pc[i])
-                new_RGB.append(rgb[i])
-                new_LAB.append(labels[i])
-
         pointC = o3d.geometry.PointCloud()
-        pointC.points = o3d.utility.Vector3dVector(new_PC)
-        pointC.colors = o3d.utility.Vector3dVector(new_RGB)
-        lastStraw.visualise(pointC)
+        pointC.points = o3d.utility.Vector3dVector(pc)
+        pointC.colors = o3d.utility.Vector3dVector(rgb)
+
+        # Filter to show only leaves
+        lastStraw.setFilter(set_class=1)
+        lastStraw.visualise(pointC, labels)
+
+        # Filter to show all classes bar background
+        lastStraw.setFilter(background = 6)
+        lastStraw.visualise(pointC, labels)
+
 
 
 if __name__ == '__main__':

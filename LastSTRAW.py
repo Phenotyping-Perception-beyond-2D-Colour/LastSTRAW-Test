@@ -103,10 +103,24 @@ class LastStrawData(Dataset):
         self.checkFolder = None
         self.downloadFile = None
         self.path = path
+        self.setClass = None
+        self.background = None
 
         # If no parameters given - do nothing more - silently
         if path == None and len(kwargs) == 0:
             return
+    
+        self.classColours = {
+            1: {'name': 'Leaf', 'colour': [0,0,255]},
+            2: {'name': 'Stem', 'colour': [0,255, 0]},
+            3: {'name': 'Fruit', 'colour': [255, 0, 255]},
+            4: {'name': 'Flower', 'colour': [255, 255, 0]},
+            5: {'name': 'Crown', 'colour': [255, 0, 0]},
+            6: {'name': 'Background',  'colour': [255,255,255]}, # Grow bag and stray leaves
+            7: {'name': 'Other part',  'colour': [255, 128, 0]},
+            8: {'name': 'Platform',  'colour': [255,255,255]},
+            9: {'name': 'Imature leaf', 'colour': [0,0,128]}
+            }
 
         # Get config
         for a in kwargs:
@@ -131,7 +145,43 @@ class LastStrawData(Dataset):
         # Store all numpy xyz files
         all_files = sorted(os.listdir(self.path))
         self.scans = [fname for fname in all_files if fname.endswith(".xyz")]
-        
+
+    # Set filter to either filter classes or background
+    def setFilter(self, *args, **kwargs):
+        if len(kwargs) == 0: return
+        self.background = kwargs.get('background',None)
+        self.setClass = kwargs.get('set_class',None)
+        reset = kwargs.get('reset',False)
+        if reset:
+            self.setClass = None
+            self.background = None
+
+    # Filters by class or by background
+    def filter(self, pc, rgb, labels):
+        if self.setClass == None and self.background == None:
+            return pc, rgb, labels
+
+        new_PC = []
+        new_RGB = []
+        new_LAB = []
+
+        for i, (pc1, rgb1, labels1) in enumerate(zip(pc,rgb,labels)):
+            
+            rgb[i] = self.classColours[labels1[0]]['colour']
+
+            # Are we selecting a class or any class bar the background
+            colour = None
+            if self.setClass != None:
+                colour = np.array_equal(rgb[i],np.array(self.classColours[self.setClass]['colour']))
+            elif self.background != None:
+                colour = not np.array_equal(rgb[i],np.array(self.classColours[self.background]['colour']))
+            
+            if colour:
+                new_PC.append(pc[i])
+                new_RGB.append(rgb[i])
+                new_LAB.append(labels[i])
+        return new_PC, new_RGB, new_LAB
+
     # Download LastSTRAW data file in zip format
     def __download(self):
         '''
@@ -211,16 +261,31 @@ class LastStrawData(Dataset):
         return
 
     # Invokes Open3D to visualise point cloud
-    def visualise(self, i):
+    def visualise(self, i, labels=None):
+        
         if isinstance(i, int):
             name = self.scans[i]
-            pointCloud,_,_ = self.__load_as_o3d_cloud(i)
+            pointCloud,_,labels, = self.__load_as_o3d_cloud(i)
         else:
             name = "PointCloud"
             pointCloud = i
+
+        # We may want to filter
+        if self.setClass != None or self.background != None:
+            pc = pointCloud.points
+            rgb = pointCloud.colors
+            pc, rgb, labels = self.filter(pc, rgb, labels)
+            pointCloud = o3d.geometry.PointCloud()
+            pointCloud.points = o3d.utility.Vector3dVector(pc)
+            pointCloud.colors = o3d.utility.Vector3dVector(rgb)
+
+        # Normalise colours
         pointCloud.colors = o3d.utility.Vector3dVector(np.asarray(pointCloud.colors) / 255)
+        
+        # Down sample as required
         if self.downSample != 0:
             pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
+        
         vis = o3d.visualization.draw_geometries([pointCloud], window_name=name)
         del vis
 
@@ -235,5 +300,8 @@ class LastStrawData(Dataset):
             pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
         pc = pointCloud.points
         rgb = pointCloud.colors
+
+        # Filter by class or any class bar background
+        pc, rgb, labels = self.filter(pc, rgb, labels)
 
         return np.asarray(pc), np.asarray(rgb), np.asarray(labels), self.scans[index]
