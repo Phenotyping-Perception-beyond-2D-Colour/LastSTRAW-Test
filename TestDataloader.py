@@ -33,10 +33,10 @@ def main():
     
     # Example of a 3D Strawberry scan in raw data
     pc, rgb, labels, fileName = lastStraw[0]
-    print(labels, fileName)
-    lastStraw.visualise(0)
+    #print(labels, fileName)
+    #lastStraw.visualise(0)
     
-    # # Load each scan
+    # Load each scan and segment by class
     for pc, rgb, labels, _ in lastStraw:
         for i, (pc1, rgb1, labels) in enumerate(zip(pc,rgb,labels)):
             if labels[0] == 1:
@@ -50,11 +50,13 @@ def main():
             if labels[0] == 5:
                 rgb[i] = [255, 0, 0]
             if labels[0] == 6:
-                rgb[i] = [255,255,255]#[128, 255, 128] 
+                rgb[i] = [255,255,255]
             if labels[0] == 7:
                 rgb[i] = [255, 128, 0]
             if labels[0] == 8:
-                rgb[i] = [255,255,255]#[255, 128, 128]
+                rgb[i] = [255,255,255]
+            if labels[0] == 9:
+                rgb[i] = [128,128,128]
   
   
  

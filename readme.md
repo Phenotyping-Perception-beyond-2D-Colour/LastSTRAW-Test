@@ -1,7 +1,7 @@
 <center>
     <p align="center">
-        <img src="Resources/Screenshot from 2024-05-30 12-20-29.png" width="200" \>
         <img src="Resources/segmented-1.png" width="300" \>
+        <img src="Resources/Screenshot from 2024-05-30 12-20-29.png" width="200" \>
         <img src="Resources/segmented-2.png" width="300" \>
     </p>
 
