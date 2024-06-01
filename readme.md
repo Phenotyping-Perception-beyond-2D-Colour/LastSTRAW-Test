@@ -15,3 +15,15 @@ This repo contains a data importer class that can download, unzip and visualise 
 
 The visualisation uses [Open3D](https://www.open3d.org/) 
 
+## Filtering
+
+As well as displaying raw data and segmented data, individual classes can be extracted
+
+<center>
+    <p align="center">
+        <img src="Resources/filter-1.png" width="200" \>
+        <img src="Resources/filter-2.png" width="200" \>
+        <img src="Resources/filter-3.png" width="200" \>
+    </p>
+
+</center>
