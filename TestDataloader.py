@@ -1,5 +1,6 @@
 from LastSTRAW import LastStrawData
 import open3d as o3d
+import numpy as np
 
 # Global setup
 
@@ -37,34 +38,33 @@ def main():
     #lastStraw.visualise(0)
     
     # Load each scan and segment by class
+    classColours = {
+        1: {'name': 'Leaf', 'colour': [0,0,255]},
+        2: {'name': 'Stem', 'colour': [0,255, 0]},
+        3: {'name': 'Fruit', 'colour': [255, 0, 255]},
+        4: {'name': 'Flower', 'colour': [255, 255, 0]},
+        5: {'name': 'Crown', 'colour': [255, 0, 0]},
+        6: {'name': 'Background',  'colour': [255,255,255]}, # Grow bag and stray leaves
+        7: {'name': 'Other part',  'colour': [255, 128, 0]},
+        8: {'name': 'Platform',  'colour': [255,255,255]},
+        9: {'name': 'Imature leaf', 'colour': [0,0,128]}
+        }
+    
+    # Filter scan and segment
     for pc, rgb, labels, _ in lastStraw:
-        for i, (pc1, rgb1, labels) in enumerate(zip(pc,rgb,labels)):
-            if labels[0] == 1:
-                rgb[i] = [0,0,255]
-            if labels[0] == 2:
-                rgb[i] = [0,255, 0]
-            if labels[0] == 3:
-                rgb[i] = [255, 0, 255] 
-            if labels[0] == 4:
-                rgb[i] = [255, 255, 0]  
-            if labels[0] == 5:
-                rgb[i] = [255, 0, 0]
-            if labels[0] == 6:
-                rgb[i] = [255,255,255]
-            if labels[0] == 7:
-                rgb[i] = [255, 128, 0]
-            if labels[0] == 8:
-                rgb[i] = [255,255,255]
-            if labels[0] == 9:
-                rgb[i] = [128,128,128]
-  
-  
- 
-            if labels[0] == 3:
-                rgb[i] = [255 - (labels[1] * 10), 50, 50]       
+        new_PC = []
+        new_RGB = []
+        new_LAB = []
+        for i, (pc1, rgb1, labels1) in enumerate(zip(pc,rgb,labels)):
+            rgb[i] = classColours[labels1[0]]['colour']
+            if not np.array_equal(rgb[i],np.array([255.,255.,255.])):
+                new_PC.append(pc[i])
+                new_RGB.append(rgb[i])
+                new_LAB.append(labels[i])
+
         pointC = o3d.geometry.PointCloud()
-        pointC.points = o3d.utility.Vector3dVector(pc)
-        pointC.colors = o3d.utility.Vector3dVector(rgb)
+        pointC.points = o3d.utility.Vector3dVector(new_PC)
+        pointC.colors = o3d.utility.Vector3dVector(new_RGB)
         lastStraw.visualise(pointC)
 
 
