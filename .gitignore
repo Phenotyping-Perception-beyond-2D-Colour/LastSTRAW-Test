@@ -163,3 +163,5 @@ cython_debug/
 
 # Andy added
 B1_2*.xyz
+np
+o3d
