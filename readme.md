@@ -1,8 +1,8 @@
 <center>
     <p align="center">
-        <img src="Resources/segmented-1.png" width="300" \>
+        <img src="Resources/segmented-1.png" width="250" \>
         <img src="Resources/video-2.gif" width="300" \>
-        <img src="Resources/segmented-2.png" width="300" \>
+        <img src="Resources/segmented-2.png" width="250" \>
     </p>
 
 </center>
