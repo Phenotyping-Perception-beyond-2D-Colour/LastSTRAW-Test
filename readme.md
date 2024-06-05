@@ -23,7 +23,7 @@ As well as displaying raw data and segmented data, individual classes can be ext
     <p align="center">
         <img src="Resources/filter-1.png" width="200" \>
         <img src="Resources/filter-2.png" width="200" \>
-        <img src="Resources/filter-3.png" width="200" \>
+        <img src="Resources/video-1.m4v" width="200" \>
     </p>
 
 </center>

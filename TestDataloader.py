@@ -33,13 +33,14 @@ def main():
                                 download_file = DOWNLOAD_FILE)
     
     # Example of a 3D Strawberry scan in raw data
-    pc, rgb, labels, fileName = lastStraw[0]
+    pc, rgb, labels, fileName = lastStraw[12]
     
     # Visualise
-    lastStraw.visualise(0)
+    lastStraw.visualise(12)
     
     # Load each scan and segment by class
-    for pc, rgb, labels, _ in lastStraw:
+    for i, (pc, rgb, labels, _) in enumerate(lastStraw):
+        if i != 12: continue
         pointC = o3d.geometry.PointCloud()
         pointC.points = o3d.utility.Vector3dVector(pc)
         pointC.colors = o3d.utility.Vector3dVector(rgb)
