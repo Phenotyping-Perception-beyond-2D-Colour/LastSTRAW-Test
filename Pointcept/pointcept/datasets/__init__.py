@@ -21,3 +21,4 @@ from .shapenet_part import ShapeNetPartDataset
 
 # dataloader
 from .dataloader import MultiDatasetDataloader
+from .marvindata_csv import MarvinDatasetCSV

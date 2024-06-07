@@ -1,0 +1,16 @@
+[
+    {
+        "sem_seg_file_name": "Harvest_01_PotNr_55_GT.csv",
+        "points": 271233,
+        "keys": [
+            "coord",
+            "color",
+            "normal",
+            "scene_id",
+            "semantic",
+            "class_names",
+            "class_names_2d",
+            "semantic_pred_2d"
+        ]
+    }
+]
