@@ -188,7 +188,7 @@ class WurTomatoData(Dataset):
         # data_array = np.loadtxt(self.path / self.scans[index]) # raw data as np array, of shape (nx6) or (nx8) if labels are available.
         data_array = pd.read_csv(self.path / self.scans[index])
 
-        labels_available = data_array.shape[1] == 19
+        labels_available = "x_skeleton" in data_array.keys()
         return data_array, labels_available
 
     # Loads point cloud from file in Numpy array. Returns point cloud
@@ -199,6 +199,7 @@ class WurTomatoData(Dataset):
         pc.points = o3d.utility.Vector3dVector(data[["x", "y", "z"]].values)
         pc.colors = o3d.utility.Vector3dVector(data[["red", "green", "blue"]].values)
         labels = None
+        skeleton_data = None
         if labels_available:
             labels = data[["semantic", "leaf_stem_instances", "leaf_instances", "stem_instances"]].values
         # if load_skeleton_data:
@@ -216,9 +217,10 @@ class WurTomatoData(Dataset):
 
     # Invokes Open3D to visualise point cloud
     def visualise(self, i):
+        print("Visualising point cloud")
         if isinstance(i, int):
             name = self.scans[i]
-            pointCloud,_,_ = self.__load_as_o3d_cloud(i)
+            pointCloud,_,_,_ = self.__load_as_o3d_cloud(i)
         else:
             name = "PointCloud"
             pointCloud = i
@@ -229,9 +231,10 @@ class WurTomatoData(Dataset):
         del vis
 
     def visualise_semantic(self, i):
+        print("Visualising semantic")
         if isinstance(i, int):
             name = self.scans[i]
-            pointCloud,_,labels = self.__load_as_o3d_cloud(i)
+            pointCloud,_,labels,_ = self.__load_as_o3d_cloud(i)
         else:
             name = "PointCloud"
             pointCloud = i
@@ -243,6 +246,7 @@ class WurTomatoData(Dataset):
         del vis
 
     def visualize_skeleton(self, i, parent_nodes_only=True):
+        print("Visualising skeleton")
         pointCloud,_,labels, skeleton_data = self.__load_as_o3d_cloud(i)
         pointCloud.colors = o3d.utility.Vector3dVector(np.asarray(pointCloud.colors) / 255)
 
@@ -285,7 +289,7 @@ class WurTomatoData(Dataset):
 if __name__=="__main__":
     obj = WurTomatoData()
     pc, rgb, labels, _ = obj[0]
-    # obj.visualise(0)
-    # obj.visualise_semantic(0)
+    obj.visualise(0)
+    obj.visualise_semantic(0)
     obj.visualize_skeleton(0)
 
