@@ -22,3 +22,4 @@ from .shapenet_part import ShapeNetPartDataset
 # dataloader
 from .dataloader import MultiDatasetDataloader
 from .marvindata_csv import MarvinDatasetCSV
+from .LASTstraw import LASTstrawDataset

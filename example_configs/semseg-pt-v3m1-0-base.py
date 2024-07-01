@@ -10,7 +10,7 @@ enable_amp = True
 
 # dataset settings
 dataset_type = "MarvinDatasetCSV"
-data_root = "example_data"
+data_root = "3DTomatoDataset/20240607_summerschool_csv"
 train_name = data_root + "/train.json"
 val_name = data_root + "/val.json"
 test_name = data_root + "/test.json"
@@ -77,7 +77,9 @@ model = dict(
 def_lr = 0.006
 
 # scheduler settings
-epoch = 600
+epoch = 60
+eval_epoch = int(epoch/10)
+
 optimizer = dict(type="AdamW", lr=def_lr, weight_decay=0.05)
 scheduler = dict(
     type="OneCycleLR",

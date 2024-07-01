@@ -27,6 +27,7 @@ from pointcept.utils.misc import (
     make_dirs,
 )
 
+import pandas as pd
 
 TESTERS = Registry("testers")
 
@@ -213,7 +214,9 @@ class SemSegTester(TesterBase):
                     assert "inverse" in data_dict.keys()
                     pred = pred[data_dict["inverse"]]
                     segment = data_dict["origin_segment"]
-                np.save(pred_save_path, pred)
+                # np.save(pred_save_path,pred)
+                df = pd.DataFrame(np.hstack([self.test_loader.dataset.get_data(idx)["coord"], np.array([pred]).transpose()]), columns=["x", "y", "z", "class_pred"])
+                df.to_csv(save_path+'/'+data_name+".txt", sep=",", index=False)
             if (
                 self.cfg.data.test.type == "ScanNetDataset"
                 or self.cfg.data.test.type == "ScanNet200Dataset"

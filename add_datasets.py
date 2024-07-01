@@ -1,6 +1,9 @@
 import shutil
 from pathlib import Path
 
+## script to autmatically updates __init__.py when adding new datasets.
+
+
 ### copy new datasets to mmsegmentation folder
 new_dataset_folder = Path("./new_datasets")
 dst_dataset_folder = Path("./Pointcept") / "pointcept" / "datasets"

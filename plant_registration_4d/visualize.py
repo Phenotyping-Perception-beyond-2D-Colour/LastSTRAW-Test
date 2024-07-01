@@ -18,13 +18,13 @@ def plot_semantic_pointcloud(ax, array_list):
         P = np.asarray(P)
         ax.scatter3D(P[:,0], P[:,1], P[:,2], '.')
 
-def plot_skeleton(ax, S, color='blue'):    
+def plot_skeleton(ax, S, color='blue', label=None):    
     """ plots the skeleton graph with nodes and edges """
     # plot vertices
     # fh = plt.figure()
     # ax = fh.gca()
     # ax = fh.add_subplot(111,projection='3d')
-    ax.scatter(S.XYZ[:,0], S.XYZ[:,1], S.XYZ[:,2], 'o', color=color, depthshade=False)
+    ax.scatter(S.XYZ[:,0], S.XYZ[:,1], S.XYZ[:,2], 'o', color=color, depthshade=False, label=label)
     
     # plot edges
     N = S.A.shape[0]

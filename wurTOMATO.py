@@ -1,6 +1,6 @@
 ################################################################
-# Author     : Andy Perrett                                    #
-# Contact    : aperrett@lincoln.ac.uk                          #
+# Author     : Bart van Marrewijk                                  #
+# Contact    : bart.vanmarrewijk@wur.nl                         #
 #            : andy@wired-wrong.co.uk                          #
 # Date       : 30-05-2024                                      #
 # Description: Written for use as part of the 2024 CDT summer  #
@@ -14,6 +14,8 @@
 import os
 import numpy as np
 import open3d as o3d
+import matplotlib.pyplot as plt
+
 from torch.utils.data import Dataset
 from tqdm import tqdm
 import requests
@@ -149,6 +151,9 @@ class WurTomatoData(Dataset):
 
         # Store all numpy xyz files
         self.scans = natsort.natsorted(list(self.path.rglob("*.csv")))
+        self.scans_dict = {}
+        for x in self.scans:
+            self.scans_dict[x.stem] = x
         
     # # Download LastSTRAW data file in zip format
     def __download(self):
@@ -290,12 +295,54 @@ class WurTomatoData(Dataset):
         rgb = pointCloud.colors
 
         return np.asarray(pc), np.asarray(rgb), np.asarray(labels), skeleton_data
+    
+    def visualize_inference(self, txt_name):
+        if isinstance(txt_name, str):
+            txt_name = Path(txt_name)
+        from utils_skeletonisation import create_skeleton_gt_data, convert_segmentation2skeleten, evaluate_skeleton
+        from plant_registration_4d import visualize as vis
+
+        # Create skeleton object
+        df_pred = pd.read_csv(txt_name)
+        df_pred = df_pred.loc[df_pred["class_pred"]==4, ["x", "y", "z"]]
+        S_pred = convert_segmentation2skeleten(df_pred, "dbscan", visualize=True)
+        
+        ## Load GT skeleton object
+        try:
+            indexi = list(self.scans_dict.keys()).index(txt_name.stem)
+        except ValueError:
+            print(f"{txt_name.stem} not in dataset, exitting")
+            exit()
+
+        pc, labels_available, labels, skeleton_data = self.__load_as_o3d_cloud(indexi)
+        S_gt = create_skeleton_gt_data(skeleton_data)
+
+        evaluate_skeleton(S_gt, S_pred, method="1", visualize=True)
+        # exit()
+
+        # Perform matching
+        # params = {'weight_e':0.01, 'match_ends_to_ends': False,  'use_labels' : False, 'label_penalty' : 1, 'debug': False}
+        # corres = skm.skeleton_matching(S_pred, S_gt, params)
+        # print("Estimated correspondences: \n", corres)
+        
+        # visualize results
+        fh = plt.figure()
+        ax = fh.add_subplot(111, projection='3d')
+        vis.plot_skeleton(ax, S_gt,'b',label="GT")
+        vis.plot_skeleton(ax, S_pred,'r', label="Pred")
+        # vis.plot_skeleton_correspondences(ax, S_gt, S_pred, corres) 
+        # vis.plot_skeleton_correspondences(ax, S_pred, S_gt, corres) 
+
+        # plt.title("Estimated correspondences between skeletons")
+        plt.legend()
+        plt.show()
 
 
 if __name__=="__main__":
     obj = WurTomatoData()
-    pc, rgb, labels, _ = obj[0]
-    obj.visualise(0)
-    obj.visualise_semantic(0)
-    obj.visualize_skeleton(0)
+    # pc, rgb, labels, _ = obj[0]
+    # obj.visualise(0)
+    # obj.visualise_semantic(0)
+    # obj.visualize_skeleton(0)
+    # obj.visualize_inference("./work_dir/debug/result/Harvest_01_PotNr_179.txt")
 
