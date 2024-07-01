@@ -9,6 +9,13 @@ This repo contains two items.
 The visualisation uses [Open3D](https://www.open3d.org/) 
 2. An example to use the dataset to apply semantic segmentation using the pointcept git. Subsequently, convert the semantic algorithm to nodes/skeleton, and evaluate the algorithm accordingly. Using semantic segmentation to convert nodes to a skeleton is one of the solutions. Besides this benchline method, we encourage you to think out of the box and for example use skeleton based approach. A starting point can be the use of graph neural networks [example](https://github.com/suprosanna/relationformer)
 
+<center>
+    <p align="center">
+        <img src="Resources/3D_tomato_plant.png" height="300" />
+        <img src="Resources/3D_tomato_plant_semantic.png" height="300" />
+        <img src="Resources/3D_tomato_plant_skeleton.png" height="300" />
+    </p>
+</center>
 
 ## Installation (without pointcept)
 
@@ -25,7 +32,7 @@ This will download the dataset. If everything is correct a folder 3DTomatoDatase
 If not, then download the dataset by hand using following [link](https://filesender.surf.nl/?s=download&token=a5b7382f-28f5-4619-887e-8ed26db65051]). Create a folder named 3DTomatoDataset, and unzip results overhere.
 
 ```
-python wurTomato.py
+python wurTomato.py --visualise 0
 # should result in following dataset structure
 #3DTomatoDatasets
 #└── 20240607_summerschool_csv
@@ -34,6 +41,12 @@ python wurTomato.py
 #    ├── test.json
 #    ├── train.json
 #    └── val.json
+```
+Also other properties can be visualized like the semantic segmentatoin, skeleton, or example of inference output
+```
+python wurTomato.py --visualise_semantic 0
+python wurTomato.py --visualise_skeleton 0
+python wurTomato.py --visualise_inference Resources/Harvest_01_PotNr_179.txt
 ```
 
 
@@ -74,11 +87,6 @@ pip install flash-attn --no-build-isolation
 
 ```
 
-## Visualising the dataset:
-```
-python wurTomato.py
-```
-
 
 ## Training a semantic segmentation model:
 Training a semantic segmenation algortihm is done using the json in the dataset folder. See example below.
@@ -95,7 +103,11 @@ python Pointcept/tools/test.py --config-file example_configs/semseg-pt-v3m1-0-ba
 ```
 
 ## 3Dsegmentation to skeleton
-After running inference a
+After running inference, the output of the semantic segmentation algorithm should be converted to a skelet. This is currently done with DBSCAN and a l
+See current example with:
+```
+python wurTomato.py --visualise_inference Resources/Harvest_01_PotNr_179.txt
+```
 
 ## Evaluation of skeleton
 Evaluation of skeletons consist of two parts:

@@ -25,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 import natsort
 
-from utils_skeletonisation import create_skeleton_gt_data, convert_segmentation2skeleten, evaluate_skeleton
+from utils_skeletonisation import create_skeleton_gt_data, convert_segmentation2skeleton, evaluate_skeleton
 from plant_registration_4d import visualize as vis
 
 
@@ -322,7 +322,7 @@ class WurTomatoData(Dataset):
         # Create skeleton object
         df_pred = pd.read_csv(txt_name)
         df_pred = df_pred.loc[df_pred["class_pred"] == 4, ["x", "y", "z"]]
-        S_pred = convert_segmentation2skeleten(df_pred, "dbscan", visualize=True)
+        S_pred = convert_segmentation2skeleton(df_pred, "dbscan", visualize=True)
 
         ## Load GT skeleton object
         try:

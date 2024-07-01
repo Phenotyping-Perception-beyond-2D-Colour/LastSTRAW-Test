@@ -86,7 +86,7 @@ def get_only_parent_nodes(skeleton_data, max_node_order=1):
     return parent_nodes_only, parent_nodes_order, edges_new
 
 
-def convert_segmentation2skeleten(df, clustering="dbscan", visualize=False):
+def convert_segmentation2skeleton(df, clustering="dbscan", visualize=False):
     if clustering == "dbscan":
         from sklearn.cluster import DBSCAN
 
@@ -235,18 +235,18 @@ def create_skeleton_gt_data(df_gt):
 
 
 if __name__ == "__main__":
-    folder = Path("3DTomatoDataset")
-    plant_id = "Harvest_01_PotNr_429"
+    folder = Path("3DTomatoDataset") / "20240607_summerschool_csv" / "annotations"
+    plant_id = "Harvest_01_PotNr_179"
     input_file = folder / plant_id / (plant_id + ".csv")
     df_gt = pd.read_csv(input_file)
     S_gt = create_skeleton_gt_data(df_gt)
 
-    folder = Path("/media/agro/PhDBart1/GARdata_local/experiments/MarvinDatasetCSV/trained_models/20240608_1453_debug")
-    input_file = folder / ("result" + input_file.stem + ".txt")
+    folder = Path("./Resources/")
+    input_file = folder / (input_file.stem + ".txt")
     df = pd.read_csv(input_file)
     df = df.loc[df["class_pred"] == 4, ["x", "y", "z"]]
 
-    S_pred = convert_segmentation2skeleten(df, "dbscan")
+    S_pred = convert_segmentation2skeleton(df, "dbscan")
 
     evaluate_skeleton(S_gt, S_pred, method="1", visualize=True)
     # exit()
