@@ -16,10 +16,11 @@ import numpy as np
 import open3d as o3d
 from torch.utils.data import Dataset
 from tqdm import tqdm
-# import requests
-# from zipfile import ZipFile
+import requests
+from zipfile import ZipFile
 from pathlib import Path
 import pandas as pd
+import natsort
 
 semantic_id2rgb_colour = {
     1:[255, 50, 50],
@@ -114,10 +115,12 @@ class WurTomatoData(Dataset):
         
         # Default values for parameters
         self.downSample = 0
-        # self.url = None
-        # self.folder = None
-        # self.checkFolder = None
-        # self.downloadFile = None
+        # https://filesender.surf.nl/?s=download&token=a5b7382f-28f5-4619-887e-8ed26db65051
+        self.url = "https://filesender.surf.nl/download.php?token=a5b7382f-28f5-4619-887e-8ed26db65051&files_ids=24561387"
+        self.folder = Path("3DTomatoDataset")
+        self.checkFolder = Path("20240607_summerschool_csv") / "annotations"
+        self.downloadFile = "downloaded.zip"
+        path = None
 
         # # If no parameters given - do nothing more - silently
         # if path == None and len(kwargs) == 0:
@@ -140,53 +143,58 @@ class WurTomatoData(Dataset):
         if path == None:
             self.__download()
             self.__unzip()
-            self.path = self.folder + self.checkFolder
+            self.path = self.folder / self.checkFolder
         else:
             self.path = path
 
         # Store all numpy xyz files
-        all_files = sorted(os.listdir(self.path))
-        self.scans = [fname for fname in all_files if fname.endswith(".csv")]
+        self.scans = natsort.natsorted(list(self.path.rglob("*.csv")))
         
     # # Download LastSTRAW data file in zip format
-    # def __download(self):
-    #     '''
-    #     If the unzipped files exist do not download. If they do not
-    #     exist then download the zip file
-    #     '''
-    #     print(self.folder + self.checkFolder)
-    #     if not os.path.isdir(self.folder + self.checkFolder):
-    #         if not os.path.isfile(self.folder + self.downloadFile):
-    #             print("Downloading: " + self.downloadFile + " to folder: " + self.folder + " from: " + self.url)
-    #             print("This may take a while (LastSTRAW is 4GB)...")
-    #             response = requests.get(self.url, stream=True)
-    #             with open(self.folder + self.downloadFile, "wb") as handle:
-    #                 for data in tqdm(response.iter_content()):
-    #                     handle.write(data)
-    #     else:
-    #         print("File already download and extracted.")
+    def __download(self):
+        '''
+        If the unzipped files exist do not download. If they do not
+        exist then download the zip file
+        '''
+        print(self.folder / self.checkFolder)
+        if not (self.folder / self.checkFolder).is_dir():
+            # if not (self.folder / self.downloadFile).is_file():
+            # print("Downloading: " + self.downloadFile + " to folder: " + self.folder + " from: " + self.url)
+            print("This may take a while (3DTomatoDataset is 4GB)...")
+            response = requests.get(self.url, stream=True)
+            if response.status_code == 200:
+            # Open a local file with write-binary ('wb') mode
+                with open(self.folder / self.downloadFile, 'wb') as file:
+                    for chunk in tqdm(response.iter_content(chunk_size=8192)): # chunk size speeds up progress
+                        if chunk:  # Filter out keep-alive new chunks
+                            file.write(chunk)
+                    print('File downloaded successfully.')
+            else:
+                print(f'Failed to download file. Status code: {response.status_code}')
+        else:
+            print("File already download and extracted.")
 
 
-    # # Taken from https://www.geeksforgeeks.org/unzipping-files-in-python/
-    # def __unzip(self):
-    #     '''
-    #     If data zip file has been download, extract all files
-    #     and delete downloaded zip file
-    #     '''
-    #     if os.path.isfile(self.folder + self.downloadFile): 
-    #         if not os.path.isdir(self.folder+ self.checkFolder):
-    #             print("Extracting: " + self.folder + self.downloadFile)
-    #             with ZipFile(self.folder + self.downloadFile, 'r') as zObject: 
-    #                 zObject.extractall(path=self.folder) 
-    #             print("Deleting " + self.folder + self.downloadFile)
-    #             os.remove(self.folder + self.downloadFile)
+    # Taken from https://www.geeksforgeeks.org/unzipping-files-in-python/
+    def __unzip(self):
+        '''
+        If data zip file has been download, extract all files
+        and delete downloaded zip file
+        '''
+        if (self.folder / self.downloadFile).is_file(): 
+            if not (self.folder / self.checkFolder).is_dir():
+                print(f"Extracting: {self.folder/self.downloadFile}")
+                with ZipFile(str(self.folder / self.downloadFile), 'r') as zObject: 
+                    zObject.extractall(path=str(self.folder)) 
+                print(f"Deleting {self.folder/self.downloadFile}")
+                os.remove(str(self.folder / self.downloadFile))
 
     # Loads point cloud data files
     def __load_as_array(self, index):
         # Loads the data from an .xyz file into a numpy array.
         # Also returns a boolean indicating whether per-point labels are available.
         # data_array = np.loadtxt(self.path / self.scans[index]) # raw data as np array, of shape (nx6) or (nx8) if labels are available.
-        data_array = pd.read_csv(self.path / self.scans[index])
+        data_array = pd.read_csv(self.scans[index], low_memory=False)
 
         labels_available = "x_skeleton" in data_array.keys()
         return data_array, labels_available
@@ -227,7 +235,7 @@ class WurTomatoData(Dataset):
         pointCloud.colors = o3d.utility.Vector3dVector(np.asarray(pointCloud.colors) / 255)
         if self.downSample != 0:
             pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
-        vis = o3d.visualization.draw_geometries([pointCloud], window_name=name)
+        vis = o3d.visualization.draw_geometries([pointCloud], window_name=name.stem)
         del vis
 
     def visualise_semantic(self, i):
@@ -242,7 +250,7 @@ class WurTomatoData(Dataset):
         pointCloud.colors = o3d.utility.Vector3dVector(colors / 255)
         if self.downSample != 0:
             pointCloud = pointCloud.voxel_down_sample(voxel_size=self.downSample)
-        vis = o3d.visualization.draw_geometries([pointCloud], window_name=name)
+        vis = o3d.visualization.draw_geometries([pointCloud], window_name=name.name)
         del vis
 
     def visualize_skeleton(self, i, parent_nodes_only=True):
@@ -262,9 +270,7 @@ class WurTomatoData(Dataset):
             colors = np.repeat(np.array([[0.5, 0.5, 0.5]]), len(skeleton_data), axis=0)
 
         vis = o3d.visualization.draw_geometries([pc_skelet], window_name="PointCloud")
-        ## 
-        pd.DataFrame(parent_nodes_only).to_csv("debug.txt", index=False)
-        print("x")
+        # pd.DataFrame(parent_nodes_only).to_csv("debug.txt", index=False)
 
     def get_only_parent_nodes(self, skeleton_data):
         parentids = skeleton_data.loc[skeleton_data["edgetype"]=="+", "parentid"].values
